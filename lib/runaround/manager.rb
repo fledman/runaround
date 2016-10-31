@@ -4,10 +4,11 @@ require "runaround/errors"
 
 module Runaround
   class Manager
-    attr_reader :receiver
+    attr_reader :receiver, :apply
 
-    def initialize(receiver)
+    def initialize(receiver, apply: true)
       @receiver = receiver
+      @apply = !!apply
     end
 
     def before(method, fifo: true, &block)
@@ -38,6 +39,18 @@ module Runaround
       end
     end
 
+    def import(other)
+      validate_manager!(other)
+      other.to_h.each do |method, callbacks|
+        callbacks.each do |type, list|
+          list.each do |block|
+            prepare_callback(
+              method: method, type: type, fifo: true, &block)
+          end
+        end
+      end
+    end
+
     private
 
     def prepare_callback(method:, type:, fifo:, &block)
@@ -51,7 +64,7 @@ module Runaround
     def setup_callback_hook(method)
       return true if callback_hooks[method]
       callback_hooks[method] = CallbackHook.build_for(method, self)
-      receiver.singleton_class.prepend callback_hooks[method]
+      receiver.singleton_class.prepend(callback_hooks[method]) if apply
     end
 
     def validate_opts!(method, type, fifo, block)
@@ -83,6 +96,12 @@ module Runaround
     def validate_block!(block)
       return if block.is_a?(Proc)
       raise CallbackSetupError, "you must pass a block for the callback!"
+    end
+
+    def validate_manager!(manager)
+      return if manager.is_a?(self.class)
+      msg = "expected a #{self.class}, got: #{manager.inspect}"
+      raise CallbackSetupError, msg
     end
 
     def copy_callback_map(method)
