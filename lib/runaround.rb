@@ -1,5 +1,6 @@
 require "runaround/version"
 require "runaround/manager"
+require "runaround/instance_methods"
 
 module Runaround
 
