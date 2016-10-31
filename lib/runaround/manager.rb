@@ -32,6 +32,12 @@ module Runaround
       return blocks, fibers
     end
 
+    def to_h
+      callback_hooks.keys.reduce({}) do |h, method|
+        h[method] = copy_callback_map(method); h
+      end
+    end
+
     private
 
     def prepare_callback(method:, type:, fifo:, &block)
@@ -79,13 +85,19 @@ module Runaround
       raise CallbackSetupError, "you must pass a block for the callback!"
     end
 
+    def copy_callback_map(method)
+      all_callbacks(method).reduce({}) do |map,(type,arr)|
+        map[type] = arr.dup; map
+      end
+    end
+
     def callback_hooks
       @callback_hooks ||= {}
     end
 
     def all_callbacks(method)
       @all_callbacks ||= {}
-      @all_callbacks[method] ||= { before:[], after:[], around: [] }
+      @all_callbacks[method] ||= { before: [], after: [], around: [] }
     end
 
   end
