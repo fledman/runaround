@@ -18,5 +18,11 @@ module Runaround
       @runaround_instance_methods ||= Manager.new(self, apply: false)
     end
 
+    def irunaround
+      runaround_instance_methods.tap do |x|
+        yield(x) if block_given?
+      end
+    end
+
   end
 end
