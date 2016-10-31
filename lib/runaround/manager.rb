@@ -10,12 +10,19 @@ module Runaround
       @receiver = receiver
     end
 
-    def prepare_callback(method:, type:, fifo:, &block)
-      validate_opts!(method, type, fifo, block)
-      setup_callback_hook(method)
-      list = all_callbacks(method)[type]
-      fifo ? list << block : list.unshift(block)
-      list.size
+    def before(method, fifo: true, &block)
+      prepare_callback(
+        method: method, type: :before, fifo: fifo, &block)
+    end
+
+    def after(method, fifo: true, &block)
+      prepare_callback(
+        method: method, type: :after, fifo: fifo, &block)
+    end
+
+    def around(method, fifo: false, &block)
+      prepare_callback(
+        method: method, type: :around, fifo: fifo, &block)
     end
 
     def callbacks(method)
@@ -27,13 +34,12 @@ module Runaround
 
     private
 
-    def callback_hooks
-      @callback_hooks ||= {}
-    end
-
-    def all_callbacks(method)
-      @all_callbacks ||= {}
-      @all_callbacks[method] ||= { before:[], after:[], around: [] }
+    def prepare_callback(method:, type:, fifo:, &block)
+      validate_opts!(method, type, fifo, block)
+      setup_callback_hook(method)
+      list = all_callbacks(method)[type]
+      fifo ? list << block : list.unshift(block)
+      list.size
     end
 
     def setup_callback_hook(method)
@@ -71,6 +77,15 @@ module Runaround
     def validate_block!(block)
       return if block.is_a?(Proc)
       raise CallbackSetupError, "you must pass a block for the callback!"
+    end
+
+    def callback_hooks
+      @callback_hooks ||= {}
+    end
+
+    def all_callbacks(method)
+      @all_callbacks ||= {}
+      @all_callbacks[method] ||= { before:[], after:[], around: [] }
     end
 
   end
