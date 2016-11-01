@@ -10,24 +10,30 @@ describe Runaround::Manager do
       expect(inst.receiver).to equal receiver
     end
 
-    it 'defaults apply to true' do
-      inst = described_class.new(receiver)
-      expect(inst.apply).to eql true
-    end
+    { apply: true,
+      for_instances: false
+    }.each do |attr, default|
+      context attr.to_s do
+        it "defaults to #{default}" do
+          inst = described_class.new(receiver)
+          expect(inst.public_send(attr)).to eql default
+        end
 
-    it 'can set apply to false' do
-      inst = described_class.new(receiver, apply: false)
-      expect(inst.apply).to eql false
-    end
+        it "can be set to #{!default}" do
+          inst = described_class.new(receiver, attr => (!default))
+          expect(inst.public_send(attr)).to eql (!default)
+        end
 
-    it 'converts a truthy apply input to true' do
-      inst = described_class.new(receiver, apply: "0")
-      expect(inst.apply).to eql true
-    end
+        it "converts a truthy input to true" do
+          inst = described_class.new(receiver, attr => "0")
+          expect(inst.public_send(attr)).to eql true
+        end
 
-    it 'converts a falsey apply input to false' do
-      inst = described_class.new(receiver, apply: nil)
-      expect(inst.apply).to eql false
+        it "converts a falsey input to false" do
+          inst = described_class.new(receiver, attr => nil)
+          expect(inst.public_send(attr)).to eql false
+        end
+      end
     end
   end
 
