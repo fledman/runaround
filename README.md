@@ -1,41 +1,77 @@
 # Runaround
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/runaround`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+An Easy Callback System for Ruby Objects
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'runaround'
-```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install runaround
+Add `gem 'runaround'` to your Gemfile
 
 ## Usage
 
-TODO: Write usage instructions here
+Runaround can be used to add `before`, `after`, and `around` callbacks to your ruby objects.
+
+#### Callbacks on a specific object instance
+```ruby
+class Subtractor
+  include Runaround
+  def subtract(a,b)
+    a - b
+  end
+end
+
+object = Subtractor.new
+object.runaround.before(:subtract){ |mc| mc.args.reverse! }
+object.subtract(7,4)
+ => -3 
+Subtractor.new.subtract(7,4)
+ => 3
+```
+
+#### Callbacks on class methods
+```ruby
+class Formatter
+  extend Runaround
+  def self.format(string)
+    string.downcase.tr('[w m]', '[m w]')
+  end
+end
+
+Formatter.runaround.after(:format){ |mc| mc.return_value += '!' }
+Formatter.format('WALMART')
+ => 'malwart!' 
+```
+
+#### Callbacks on instance methods
+```ruby
+require 'json'
+class Worker
+  extend Runaround::InstanceMethods
+  def work(**opts)
+    opts.to_json
+  end
+  irunaround.around(:work) do |mc|
+    puts "  BEFORE WORK"
+    mc.opts[:foo_id] = 12345
+    result = mc.run_method
+    puts "  WORK COMPLETE, GOT: #{result.inspect}"
+  end
+end
+
+worker = Worker.new
+worker.work(thing: 'one')
+  BEFORE WORK
+  WORK COMPLETE, GOT: "{\"thing\":\"one\",\"foo_id\":12345}"
+ => "{\"thing\":\"one\",\"foo_id\":12345}"
+```
 
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
-
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/runaround.
-
+Bug reports and pull requests are welcome on GitHub at https://github.com/fledman/runaround.
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-
