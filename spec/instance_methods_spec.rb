@@ -2,16 +2,21 @@ require 'spec_helper'
 
 describe Runaround::InstanceMethods do
 
-  context 'when included' do
-    let(:klass) { Class.new(Object).include(described_class) }
+  let(:klass) do
+    Class.new(Object) do
+      def work; 'RESULT'; end
+    end
+  end
 
+  context 'when included' do
     it 'raises an error' do
-      expect { klass }.to raise_error(RuntimeError, /extended, not included/)
+      expect { klass.include(described_class)
+             }.to raise_error(RuntimeError, /extended, not included/)
     end
   end
 
   context 'when extended' do
-    let(:klass) { Class.new(Object).extend(described_class) }
+    before { klass.extend(described_class) }
 
     it 'includes Runaround into the class' do
       expect(klass.ancestors).to include(::Runaround)
@@ -74,7 +79,7 @@ describe Runaround::InstanceMethods do
       before do
         klass.irunaround.before(:to_s){ |mc| markers[mc.method][:before] += 1 }
         klass.irunaround.after( :to_s){ |mc| markers[mc.method][:after]  += 1 }
-        klass.irunaround.around(:object_id) do |mc|
+        klass.irunaround.around(:work) do |mc|
           markers[mc.method][:around] += 1
           mc.run_method
           markers[mc.method][:around] += 1
@@ -87,9 +92,9 @@ describe Runaround::InstanceMethods do
         expect(markers).to eql({ to_s: {before: 1, after: 1} })
         4.times{ instance.to_s }
         expect(markers).to eql({ to_s: {before: 5, after: 5} })
-        instance.object_id
+        instance.work
         expect(markers).to eql({ to_s: {before: 5, after: 5},
-                                 object_id: { around: 2 } })
+                                 work: { around: 2 } })
       end
     end
   end
