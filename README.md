@@ -8,7 +8,7 @@ Add `gem 'runaround'` to your Gemfile
 
 ## Usage
 
-Runaround can be used to add `before`, `after`, and `around` callbacks to your ruby objects.
+`Runaround` can be used to add `before`, `after`, and `around` callbacks to your ruby objects.
 
 #### Callbacks on a specific object instance
 ```ruby
@@ -34,9 +34,9 @@ class Formatter
   def self.format(string)
     string.downcase.tr('[w m]', '[m w]')
   end
+  runaround.after(:format){ |mc| mc.return_value += '!' }
 end
 
-Formatter.runaround.after(:format){ |mc| mc.return_value += '!' }
 Formatter.format('WALMART')
  => 'malwart!' 
 ```
@@ -63,6 +63,12 @@ worker.work(thing: 'one')
   WORK COMPLETE, GOT: "{\"thing\":\"one\",\"foo_id\":12345}"
  => "{\"thing\":\"one\",\"foo_id\":12345}"
 ```
+
+#### More Details
+Callbacks are passed a [Runaround::MethodCall](https://github.com/fledman/runaround/blob/master/lib/runaround/method_call.rb) struct. This allows for manipulation of the input arguments/options as well as the return value. Be careful when using this functionality.
+
+`before` and `after` callbacks are implemented using simple blocks, while `around` callbacks are implemented using `Fiber`s.
+As such, `MethodCall#run_method` is only used for `around` callbacks. All `around` callbacks must call it.
 
 ## Development
 
