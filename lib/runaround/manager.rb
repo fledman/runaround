@@ -4,11 +4,12 @@ require "runaround/errors"
 
 module Runaround
   class Manager
-    attr_reader :receiver, :apply
+    attr_reader :receiver, :apply, :for_instances
 
-    def initialize(receiver, apply: true)
+    def initialize(receiver, apply: true, for_instances: false)
       @receiver = receiver
       @apply = !!apply
+      @for_instances = !!for_instances
     end
 
     def before(method, fifo: true, &block)
@@ -75,7 +76,8 @@ module Runaround
     end
 
     def validate_method!(method)
-      return if receiver.respond_to?(method)
+      return if !for_instances && receiver.respond_to?(method)
+      return if for_instances && receiver.method_defined?(method)
       msg = "the receiver does not respond to #{method.inspect}"
       raise CallbackSetupError, "#{msg} ==> receiver.inspect"
     end

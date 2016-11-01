@@ -15,7 +15,8 @@ module Runaround
     end
 
     def runaround_instance_methods
-      @runaround_instance_methods ||= Manager.new(self, apply: false)
+      @runaround_instance_methods ||= Manager.new(
+        self, apply: false, for_instances: true)
     end
 
     def irunaround
